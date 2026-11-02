@@ -1,0 +1,62 @@
+# 启动：python -m uvicorn main:app --reload
+# 使用 VS Code REST Client；也可在 http://127.0.0.1:8000/docs 中练习。
+# 重启后恢复初始任务 zw；新任务 ID 是服务端生成的字符串。
+@baseUrl = http://127.0.0.1:8000
+
+### 查询全部任务：200，每条记录包含 id
+GET {{baseUrl}}/taskone
+
+### 查询初始任务：200
+GET {{baseUrl}}/taskone/zw
+
+### 创建任务：201，响应带有生成的 id
+# @name createTask
+POST {{baseUrl}}/taskone
+Content-Type: application/json
+
+{
+  "title": "学习业务分层",
+  "description": "将字典操作移动到 services.py",
+  "status": "pending"
+}
+
+### 查询新任务：先运行上面的 createTask 请求
+GET {{baseUrl}}/taskone/{{createTask.response.body.$.id}}
+
+### 只修改状态：200，标题和描述保持原值
+PATCH {{baseUrl}}/taskone/{{createTask.response.body.$.id}}
+Content-Type: application/json
+
+{
+  "status": "completed"
+}
+
+### 删除新任务：204，无响应体
+DELETE {{baseUrl}}/taskone/{{createTask.response.body.$.id}}
+
+### 查询已删除的任务：404
+GET {{baseUrl}}/taskone/{{createTask.response.body.$.id}}
+
+### 更新不存在的任务：404
+PATCH {{baseUrl}}/taskone/missing-task
+Content-Type: application/json
+
+{
+  "status": "completed"
+}
+
+### 非法状态：422
+PATCH {{baseUrl}}/taskone/zw
+Content-Type: application/json
+
+{
+  "status": "unknown"
+}
+
+### 字段可省略，但不能显式传 null：422
+PATCH {{baseUrl}}/taskone/zw
+Content-Type: application/json
+
+{
+  "title": null
+}
